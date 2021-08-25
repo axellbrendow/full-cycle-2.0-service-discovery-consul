@@ -131,3 +131,32 @@ consul join 172.25.0.3  # This is the ip of consulserver02
 consul members  # You should see two members now
 ```
 
+### Open another terminal and start consulserver03:
+
+```sh
+docker-compose exec consulserver03 sh
+
+ifconfig  # Get your ip address from the docker interface, usually eth0. Mine is 172.25.0.4
+
+mkdir /etc/consul.d
+mkdir /var/lib/consul
+
+consul agent -server \
+    -bootstrap-expect=3 \
+    -node=consulserver03 \
+    -bind=172.25.0.4 \
+    -data-dir=/var/lib/consul \
+    -config-dir=/etc/consul.d \
+    -encrypt=YGsICA9Fwq6TmFQI/qm4qIbdITrhvnHAsfZElu2czlk=
+```
+
+### Open another terminal, go to the consulserver03 and join the consulserver02:
+
+```sh
+docker-compose exec consulserver03 sh
+
+consul join 172.25.0.3  # This is the ip of consulserver02
+
+consul members  # You should see three members now
+```
+
