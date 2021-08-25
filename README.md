@@ -237,3 +237,67 @@ consul catalog nodes -detailed
 # consulserver03  8cc0664d-f28e-de2f-b3c6-ab1c9c12aa00  172.25.0.4  dc1  lan=172.25.0.4, lan_ipv4=172.25.0.4, wan=172.25.0.4, wan_ipv4=172.25.0.4  consul-network-segment=
 ```
 
+### Open another terminal, go to the consulclient02 and run:
+
+```sh
+docker-compose exec consulclient02 sh
+
+ifconfig  # Get your ip address from the docker interface, usually eth0. Mine is 172.25.0.6
+
+mkdir /etc/consul.d
+mkdir /var/lib/consul
+
+consul agent \
+    -bind=172.25.0.6 \
+    -data-dir=/var/lib/consul \
+    -config-dir=/etc/consul.d \
+    -encrypt=YGsICA9Fwq6TmFQI/qm4qIbdITrhvnHAsfZElu2czlk= \
+    -retry-join=172.25.0.3 \
+    -retry-join=172.25.0.4 \
+    -retry-join=172.25.0.2  # If cannot join one server, try the others
+```
+
+### Open another terminal, go to the consulclient02 and run:
+
+```sh
+docker-compose exec consulclient02 sh
+
+apk add -U bind-tools  # To install the dig command
+
+# Consult the DNS server, you should see only one ip for the
+# nginx service because of the healthcheck for nginx2 
+dig @localhost -p 8600 nginx.service.consul
+
+apk add nginx
+mkdir /run/nginx
+nginx
+ps
+curl localhost  # To see if nginx is working
+
+# Replace nginx default.conf
+echo "# This is a default site configuration which will simply return 404, preventing
+# chance access to any other virtualhost.
+
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /usr/share/nginx/html;
+
+        # You may need this to prevent return 404 recursion.
+        location = /404.html {
+                internal;
+        }
+}" > /etc/nginx/conf.d/default.conf
+
+mkdir -p /usr/share/nginx/html
+echo "Nginx Service / HashiCorp Consul!!!" > /usr/share/nginx/html/index.html
+nginx -s reload
+curl localhost
+
+dig @localhost -p 8600 nginx.service.consul  # Now you should see two ips for the nginx service
+
+# If you wanna see the encryption working, run:
+apk add tcpdump
+tcpdump -i eth0 -an port 8301 -A
+```
