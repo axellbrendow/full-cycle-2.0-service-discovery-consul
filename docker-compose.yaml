@@ -9,3 +9,8 @@ services:
     ports:
       - "8500:8500"
 
+  consulserver02:
+    image: consul:1.10
+    container_name: consulserver02
+    hostname: consulserver02
+    command: ['tail', '-f', '/dev/null']

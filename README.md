@@ -65,3 +65,69 @@ consulserver01.node.consul.   0       IN      TXT     "consul-network-segment="
 ;; MSG SIZE  rcvd: 101
 ```
 
+## Running consul in Server mode
+
+This should be the final result after following this README:
+
+http://localhost:8500
+
+![Showing Consul UI with all services and nodes](./consul-ui.gif)
+
+### Starting consulserver01
+
+```sh
+docker-compose up -d
+
+# After consul container startup, go inside it:
+docker-compose exec consulserver01 sh
+
+# And run:
+consul keygen
+# Generates a cryptographic key that everyone should use to communicate in the cluster
+# Output should be like: YGsICA9Fwq6TmFQI/qm4qIbdITrhvnHAsfZElu2czlk=
+
+ifconfig  # Get your ip address from the docker interface, usually eth0. Mine is 172.25.0.2
+
+mkdir /etc/consul.d
+mkdir /var/lib/consul
+
+consul agent -server \
+    -bootstrap-expect=3 \
+    -node=consulserver01 \
+    -bind=172.25.0.2 \
+    -data-dir=/var/lib/consul \
+    -config-dir=/etc/consul.d \
+    -encrypt=YGsICA9Fwq6TmFQI/qm4qIbdITrhvnHAsfZElu2czlk= \
+    -ui \
+    -client=0.0.0.0
+```
+
+### Open another terminal and start consulserver02:
+
+```sh
+docker-compose exec consulserver02 sh
+
+ifconfig  # Get your ip address from the docker interface, usually eth0. Mine is 172.25.0.3
+
+mkdir /etc/consul.d
+mkdir /var/lib/consul
+
+consul agent -server \
+    -bootstrap-expect=3 \
+    -node=consulserver02 \
+    -bind=172.25.0.3 \
+    -data-dir=/var/lib/consul \
+    -config-dir=/etc/consul.d \
+    -encrypt=YGsICA9Fwq6TmFQI/qm4qIbdITrhvnHAsfZElu2czlk=
+```
+
+### Open another terminal, go to the consulserver01 and join the consulserver02:
+
+```sh
+docker-compose exec consulserver01 sh
+
+consul join 172.25.0.3  # This is the ip of consulserver02
+
+consul members  # You should see two members now
+```
+
