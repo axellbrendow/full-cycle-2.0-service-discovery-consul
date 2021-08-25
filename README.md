@@ -217,3 +217,23 @@ nginx.service.consul.   0       IN      A       172.25.0.5
 ;; MSG SIZE  rcvd: 65
 ```
 
+### Still inside the consulclient01 run:
+
+```sh
+curl localhost:8500/v1/catalog/services
+# Output should be {"consul":[],"nginx":["web"]}
+
+consul catalog nodes -service nginx
+# Output should be like:
+# Node            ID        Address     DC
+# consulclient01  670e9dfc  172.25.0.5  dc1
+
+consul catalog nodes -detailed
+# Output should be like:
+# Node            ID                                    Address     DC   TaggedAddresses                                                           Meta
+# consulclient01  670e9dfc-fd4d-2b45-b483-8fe40057fc96  172.25.0.5  dc1  lan=172.25.0.5, lan_ipv4=172.25.0.5, wan=172.25.0.5, wan_ipv4=172.25.0.5  consul-network-segment=
+# consulserver01  60dafa67-31bd-0a2b-b884-ea462a8db3d8  172.25.0.2  dc1  lan=172.25.0.2, lan_ipv4=172.25.0.2, wan=172.25.0.2, wan_ipv4=172.25.0.2  consul-network-segment=
+# consulserver02  812f24ab-c7a6-80b1-4748-c53ccfa524da  172.25.0.3  dc1  lan=172.25.0.3, lan_ipv4=172.25.0.3, wan=172.25.0.3, wan_ipv4=172.25.0.3  consul-network-segment=
+# consulserver03  8cc0664d-f28e-de2f-b3c6-ab1c9c12aa00  172.25.0.4  dc1  lan=172.25.0.4, lan_ipv4=172.25.0.4, wan=172.25.0.4, wan_ipv4=172.25.0.4  consul-network-segment=
+```
+
