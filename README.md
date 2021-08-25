@@ -160,3 +160,60 @@ consul join 172.25.0.3  # This is the ip of consulserver02
 consul members  # You should see three members now
 ```
 
+### Open another terminal, go to the consulclient01 and run:
+
+```sh
+docker-compose exec consulclient01 sh
+
+ifconfig  # Get your ip address from the docker interface, usually eth0. Mine is 172.25.0.5
+
+mkdir /etc/consul.d
+mkdir /var/lib/consul
+
+consul agent \
+    -bind=172.25.0.5 \
+    -data-dir=/var/lib/consul \
+    -config-dir=/etc/consul.d \
+    -encrypt=YGsICA9Fwq6TmFQI/qm4qIbdITrhvnHAsfZElu2czlk=
+```
+
+### Open another terminal, go to the consulclient01 and run:
+
+```sh
+docker-compose exec consulclient01 sh
+
+consul join 172.25.0.3  # This is the ip of consulserver02
+
+consul members  # Now you should see 4 members
+
+consul reload  # To ensure consul will load the services.json file
+
+apk add -U bind-tools  # To install the dig command
+
+dig @localhost -p 8600 nginx.service.consul  # Consult the DNS server for the nginx service
+```
+
+### You should see something like that:
+
+```
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10158
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;nginx.service.consul.          IN      A
+
+;; ANSWER SECTION:
+nginx.service.consul.   0       IN      A       172.25.0.5
+
+;; Query time: 3 msec
+;; SERVER: 127.0.0.1#8600(127.0.0.1)
+;; WHEN: Fri Aug 20 12:52:11 UTC 2021
+;; MSG SIZE  rcvd: 65
+```
+
