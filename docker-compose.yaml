@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  consulserver01:
+    image: consul:1.10
+    container_name: consulserver01
+    hostname: consulserver01
+    command: ['tail', '-f', '/dev/null']
+    ports:
+      - "8500:8500"
+
